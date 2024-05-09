@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles/index.css">
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.6/css/unicons.css">
+    <link rel="icon" type="image/x-icon" href="./images/logo for l 7s2.jpg">
     <title>UnityWeb</title>
 </head>
 <body>
@@ -17,10 +18,15 @@
                 <i class="uil uil-search"></i>
                 <input name="userSearch" type="search" placeholder="Search For Users">
             </div>
-            <div class="create">
-                <label class="button button-pri" for="CreatePost">Create</label>
-                <input type="text" id="CreatePost" name="CreatePost">
-
+            <div class="Logout">
+                <label class="button button-pri" for="Logout">Logout</label>
+                <script>
+                    var logoutElement = document.querySelector('.Logout');
+                    
+                    logoutElement.addEventListener('click', function() {
+                        window.location.href = '../BackEnd/templates/login_Page.html';
+                    });
+                </script>
                 <div class="profilePic">
                     <img src="./images/369526677_2527570767419676_1453225281164553236_n.jpg">
                 </div>
@@ -45,9 +51,6 @@
                     <a class="MenuItems ACT">
                         <span><i class="uil uil-home"></i></span><h3>Home</h3>
                     </a>
-                    <!-- <a class="MenuItems">
-                        <span><i class="uil uil-compass"></i></span><h3>Explore</h3>
-                    </a> -->
                     <a class="MenuItems" id="Noti">
                         <span><i class="uil uil-bell"><small class="NotiCount">6</small></i></span><h3>Notifications</h3>
                         <div class="NotiPopup">
@@ -68,9 +71,6 @@
                     <a class="MenuItems" id ="Thme">
                         <span><i class="uil uil-palette"></i></span><h3>Theme</h3>
                     </a>
-                    <!-- <a class="MenuItems">
-                        <span><i class="uil uil-chart-line"></i></span><h3>Analytics</h3>
-                    </a> -->
                     <a class="MenuItems">
                         <span><i class="uil uil-setting"></i></span><h3>Settings</h3>
                     </a>

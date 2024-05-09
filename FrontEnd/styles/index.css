@@ -127,6 +127,11 @@ nav .create{
     gap: 2rem;
 }
 
+nav .Logout{
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
 main {
     position: relative;
     top: 5.4rem; /* Added 'rem' unit */
@@ -327,28 +332,7 @@ main .container .Left .profile{
     z-index: 2;
 }
 
-.Mid .Stories .Story:nth-child(1){
-    background: url('../images/369526677_2527570767419676_1453225281164553236_n.jpg')
-    no-repeat center center/cover;
-}
-.Mid .Stories .Story:nth-child(2){
-    background: url('../images/369526677_2527570767419676_1453225281164553236_n.jpg')
-    no-repeat center center/cover;
-}
-.Mid .Stories .Story:nth-child(3){
-    background: url('../images/369526677_2527570767419676_1453225281164553236_n.jpg')
-    no-repeat center center/cover;
-}
-.Mid .Stories .Story:nth-child(4){
-    background: url('../images/369526677_2527570767419676_1453225281164553236_n.jpg')
-    no-repeat center center/cover;
-}
-.Mid .Stories .Story:nth-child(5){
-    background: url('../images/369526677_2527570767419676_1453225281164553236_n.jpg')
-    no-repeat center center/cover;
-}
-
-.Mid .Story .profilePic{
+.Mid .Story .profilePic{ 
     width: 2rem;
     height: 2rem;
     align-self: start;

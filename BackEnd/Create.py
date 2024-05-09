@@ -3,13 +3,16 @@ import os
 from sqlalchemy import create_engine, exc
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Enum, ForeignKey, Date
+from sqlalchemy import Column, Enum, ForeignKey, Date, TIMESTAMP, LargeBinary
 from sqlalchemy.dialects.mysql import VARCHAR, CHAR
+from sqlalchemy import String
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from datetime import datetime
 # Create the base class using the declarative_base factory function
 Base = declarative_base()
+
+flask_secret_key = os.getenv("FLASK_SECRET_KEY")
 
 
 def generate_uuid():
@@ -27,6 +30,7 @@ class Users(Base):
     Email = Column("Email", VARCHAR(255))
     PasswordHash = Column("PasswordHash", VARCHAR(128))
     Birthday = Column("Birthday", Date)
+    avatar_image_id = Column("avatar_image_id", CHAR(36), ForeignKey('images.image_id'), nullable=True)
 
     def set_password(self, password):
         self.PasswordHash = generate_password_hash(password)
@@ -34,7 +38,7 @@ class Users(Base):
     def check_password(self, password):
         return check_password_hash(self.PasswordHash, password)
 
-    def __init__(self, FirstName, LastName, Gender, ProfileName, Email, Password, Birthday):
+    def __init__(self, FirstName, LastName, Gender, ProfileName, Email, Password, Birthday, avatar_image_id):
         self.FirstName = FirstName
         self.LastName = LastName
         self.Gender = Gender
@@ -42,6 +46,7 @@ class Users(Base):
         self.Email = Email
         self.set_password(Password)
         self.Birthday = Birthday
+        self.avatar_image_id = avatar_image_id
 
 
 class Posts(Base):
@@ -49,6 +54,7 @@ class Posts(Base):
     PostID = Column("PostID", CHAR(36), primary_key=True, default=generate_uuid)
     UserID = Column("UserID", CHAR(36), ForeignKey('users.userID'))  # Corrected
     PostContent = Column("PostContent", VARCHAR(1024))
+    image = Column("image", VARCHAR(255), nullable=True)
 
     def __init__(self, UserID, PostContent):
         self.UserID = UserID
@@ -65,10 +71,6 @@ class Likes(Base):
     def __init__(self, UserID, PostID):
         self.UserID = UserID
         self.PostID = PostID
-
-
-def generate_uuid():
-    return str(uuid.uuid4())
 
 
 class Comments(Base):
@@ -96,16 +98,85 @@ class Follows(Base):
         self.FolloweeID = FolloweeID
 
 
-def add_user(FirstName, LastName, Gender, ProfileName, Email, Password, Birthday):
+class Notifications(Base):
+    __tablename__ = "notifications"
+    id = Column("id", CHAR(36), primary_key=True, default=generate_uuid)
+    user_id = Column("user_id", CHAR(36), ForeignKey('users.userID'))
+    message = Column("message", VARCHAR(255))
+    created_at = Column("created_at", TIMESTAMP, default=datetime.utcnow)
+
+    def __init__(self, user_id, message):
+        self.user_id = user_id
+        self.message = message
+
+
+def create_notification(user_id, message):
+    notification = Notifications(user_id=user_id, message=message)
+    session.add(notification)
+    session.commit()
+
+
+class Images(Base):
+    __tablename__ = "images"
+    image_id = Column("image_id", CHAR(36), primary_key=True, default=generate_uuid)
+    user_id = Column("user_id", CHAR(36), ForeignKey('users.userID'))
+    image_path = Column("image_path", String)  # New column to store image file path
+    upload_time = Column("upload_time", TIMESTAMP, default=datetime.utcnow)
+    image_url = Column("image_url", String)
+    
+    def __init__(self, user_id, image_path, image_url=None):
+        self.user_id = user_id
+        self.image_path = image_path
+        self.image_url = image_url
+
+
+class Stories(Base):
+    __tablename__ = "stories"
+    StoryID = Column("StoryID", CHAR(36), primary_key=True, default=generate_uuid)
+    UserID = Column("UserID", CHAR(36), ForeignKey('users.userID'))
+    StoryContent = Column("StoryContent", VARCHAR(1024))
+    ImagePath = Column("ImagePath", VARCHAR(255), nullable=True)
+
+    def __init__(self, UserID, StoryContent, ImagePath=None):
+        self.UserID = UserID
+        self.StoryContent = StoryContent
+        self.ImagePath = ImagePath
+
+
+def add_story(UserID, StoryContent, ImagePath=None):
+    story = Stories(UserID=UserID, StoryContent=StoryContent, ImagePath=ImagePath)
+    session.add(story)
+    session.commit()
+    print("Story Added")
+
+
+def delete_story(story_id):
+    story_to_delete = session.query(Stories).filter(Stories.StoryID == story_id).one()
+    session.delete(story_to_delete)
+    session.commit()
+    print("Story Deleted")
+
+
+def add_user(FirstName, LastName, Gender, ProfileName, Email, Password, Birthday, session, avatar_image_id=None):
     Email_exist = session.query(Users).filter(Users.Email == Email).all()
     Profile_Name_Exist = session.query(Users).filter(Users.ProfileName == ProfileName).all()
     if len(Email_exist) > 0:
         print("Email Address already exists")
     elif len(Profile_Name_Exist) > 0:
-        print("That ProfileName Was Taken Please Chose Another One!")
+        print("That ProfileName Was Taken Please Choose Another One!")
     else:
-        user = Users(FirstName=FirstName, LastName=LastName, Gender=Gender, ProfileName=ProfileName, Email=Email, Password=Password, Birthday=Birthday)
-        session.add(user)
+        new_user = Users(FirstName=FirstName, LastName=LastName, Gender=Gender, ProfileName=ProfileName, Email=Email, Password=Password, Birthday=Birthday, avatar_image_id=avatar_image_id)
+        session.add(new_user)
+        session.commit()
+        return new_user
+
+
+
+
+def edit_user_email(userID, new_email):
+    User = session.query(Users).filter_by(userID=userID).first()
+    if User:
+        User.set_email(new_email)
         session.commit()
 
 
@@ -127,6 +198,21 @@ def add_or_remove_like(UserID, PostID):
         session.add(like)
         session.commit()
         print("Like added")
+
+
+def edit_user_info(user_id, new_first_name, new_last_name, new_email):
+    user = session.query(Users).filter_by(userID=user_id).first()
+    if user:
+        if new_first_name:
+            user.FirstName = new_first_name
+        if new_last_name:
+            user.LastName = new_last_name
+        if new_email:
+            user.Email = new_email
+        session.commit()
+        return user
+    else:
+        return None
 
 
 def add_comment(UserID, PostID, CommentContent):
@@ -239,6 +325,26 @@ def count_followers(userID):
 def count_follows(userID):
     follows_count = session.query(Follows).filter_by(FollowerID=userID).count()
     return follows_count
+
+
+def delete_story(story_id):
+    """
+    Delete a story from the database by its ID.
+    """
+    story = session.query(Stories).filter_by(StoryID=story_id).first()
+    if story:
+        session.delete(story)
+        session.commit()
+        return True
+    return False
+
+
+def fetch_stories_for_user(user_id):
+    """
+    Fetch stories for a user from the database.
+    """
+    stories = session.query(Stories).filter_by(UserID=user_id).all()
+    return stories
 
 
 db_user = os.getenv("DB_USER")

@@ -56,8 +56,10 @@ body {
 }
 
 .welcome-message {
+  position: fixed;
   text-align: left;
   font-size: 2em;
   color: white;
-  margin-top: 20px;
+  /* margin-top: 0px; */
+  top: 0;
 }
